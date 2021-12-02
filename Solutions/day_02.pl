@@ -61,6 +61,21 @@ report_number(1, $result);
 exit unless $main::do_part_2;
 # Part 2
 
+%position = (
+    forward => 0,
+    aim => 0,
+    depth => 0,
+);
+foreach my $move (@puzzle_data) {
+    my ($direction, $distance) = split ' ', $move;
+    if ('forward' eq $direction) {
+        $position{'forward'} += $distance;
+        $position{'depth'} += $position{'aim'} * $distance;
+    } else {
+        $position{'aim'} += $distance * (('down' eq $direction)? 1 : -1); 
+    }
+}
+$result = $position{'forward'} * $position{'depth'};
 report_number(2, $result);
 
     

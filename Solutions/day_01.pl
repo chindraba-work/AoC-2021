@@ -55,6 +55,10 @@ report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
+$result = 0;
+for $depth_index (3..$#depth_list) {
+    ++$result if $depth_list[$depth_index] > $depth_list[$depth_index - 3];
+}
 report_number(2, $result);
 
     

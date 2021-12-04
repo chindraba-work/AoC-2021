@@ -38,6 +38,7 @@ use strict;
 use warnings;
 use Elves::GetData qw( :all );
 use Elves::Reports qw( :all );
+use List::Util qw(sum);
 
 my $VERSION = '0.21.04';
 
@@ -50,6 +51,7 @@ sub read_card {
         Diagonal => 0,
         Slash => 0,
         Total => 0,
+        InPlay => 1,
     };
     for my $rank (0..$#{$card_table}) {
         $card_marks->{"Rank:$rank"} = 0;
@@ -101,6 +103,44 @@ report_number(1, $result);
 exit unless $main::do_part_2;
 # Part 2
 
+$card_marks = {};
+%locations = ();
+for my $card_id (1..$#bingo_data) {
+    $card_marks->{$card_id} = read_card($bingo_data[$card_id], $card_id, \%locations);
+}
+my @winner_list = (1);
+for (keys %$card_marks) {
+    $winner_list[$_] = 1;
+}
+$winner = 0;
+$result = 0;
+($draw, $drawing, $winner) = (0) x 3;
+while ( 1 < sum(@winner_list) ) {
+    $draw = $draws[$drawing];
+    for ($locations{$draw}) {
+        for (@$_) {
+            my ($c_id, $r_id, $f_id) = split /:/, $_;
+            if (1 == $card_marks->{$c_id}{"InPlay"}) {
+                $card_marks->{$c_id}{"Total"} -= $draw;
+                $card_marks->{$c_id}{"Rank:".$r_id}++;
+                $winner = $c_id if ($card_marks->{$c_id}{"Rank:".$r_id} > $#{$bingo_data[1]->[0]});
+                $card_marks->{$c_id}{"File:".$f_id}++;
+                $winner = $c_id if ($card_marks->{$c_id}{"File:".$f_id} > $#{$bingo_data[1]->[0]});
+                $card_marks->{$c_id}{"Diagonal"}++ if $r_id == $f_id;
+#               $winner = $c_id if ($card_marks->{$c_id}{"Diagonal"} > $#{$bingo_data[1]->[0]});
+                $card_marks->{$c_id}{"Slash"}++ if ($r_id + $f_id) == $#{$bingo_data[1]->[0]};
+#               $winner = $c_id if ($card_marks->{$c_id}{"Slash"} > $#{$bingo_data[1]->[0]});
+                if ($winner) {
+                    $result = $card_marks->{$c_id}{"Total"} * $draw;
+                    $card_marks->{$c_id}{"InPlay"} = 0;
+                    $winner_list[$winner] = 0;
+                    $winner = 0;
+                }
+            }
+        }
+    }
+    ++$drawing;
+}
 report_number(2, $result);
 
 1;

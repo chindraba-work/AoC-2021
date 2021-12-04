@@ -46,6 +46,27 @@ my $bit_count = length $puzzle_data[0];
 my @sums = (0) x $bit_count;
 -- $bit_count;
 
+sub sieve {
+    my ($go_low, $list) = @_;
+    my ($step) = (0);
+    while (1 < @$list) {
+        my ($filter, $aughts, $naughts);
+        $filter = "^" . '.' x $step++ . '0';
+        @$naughts = grep /$filter/, @$list;
+        @$aughts = grep !/$filter/, @$list;
+        if ( -1 == $aughts ) {
+            $list = $naughts;
+        } elsif ( -1 == $naughts ) {
+            $list = $aughts;
+        } elsif ( @$naughts == @$aughts ) {
+            $list = ($go_low)? $naughts : $aughts;
+        } else {
+            $list = (@$naughts < @$aughts)? ($go_low) ? $naughts : $aughts : ($go_low)? $aughts : $naughts;
+        }
+    }
+    return @$list[0];
+}
+
 # Part 1
 for (@puzzle_data) {
     my @bits = split //, $_;
@@ -62,7 +83,7 @@ report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
-
+$result = eval("0b".sieve(0, \@puzzle_data)) * eval("0b".sieve(1, \@puzzle_data));
 report_number(2, $result);
 
     

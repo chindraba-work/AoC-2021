@@ -80,6 +80,10 @@ exit unless $main::do_part_2;
 # Part 2
 
 
+for (81..256) {
+    @now_fish = next_day(@now_fish);
+}
+$result = sum(@now_fish);
 report_number(2, $result);
 
 

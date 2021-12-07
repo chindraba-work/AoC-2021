@@ -59,6 +59,12 @@ report_number(1, $result);
 exit unless $main::do_part_2;
 # Part 2
 
+$result = 0;
+my $next_bet = int(mean(@puzzle_list) );
+for (@puzzle_list) {
+    my $distance = abs($_ - $next_bet);
+    $result += ($distance * ( $distance + 1)) / 2;
+}
 report_number(2, $result);
 
 

@@ -73,15 +73,8 @@ for (@$outputs) {
 
 report_number(1, $result);
 
-
 exit unless $main::do_part_2;
 # Part 2
-
-my $input_list = 'acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf';
-my ($left, $right) = split /\s+\|\s+/, $input_list;
-my @value_list = sort(split /\s+/, $left);
-my @output_list = sort(split /\s+/, $right);
-
 
 report_number(2, $result);
 

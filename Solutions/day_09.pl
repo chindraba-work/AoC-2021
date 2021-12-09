@@ -38,6 +38,7 @@ use strict;
 use warnings;
 use Elves::GetData qw( :all );
 use Elves::Reports qw( :all );
+
 my $VERSION = '0.21.09';
 
 my $result = 0;
@@ -52,7 +53,7 @@ for my $row (0..$#map) {
     for my $col (0..$#{$map[$row]}) {
         my $test = $map[$row]->[$col];
         my $is_low = 1;
-        if ($row > 0 && $map[$row - 1]->[$col] <= $test) { 
+        if ($row > 0 && $map[$row - 1]->[$col] <= $test) {
             $is_low *= 0;
         }
         if ($is_low && $row < $#map && $map[$row + 1]->[$col] <= $test) {
@@ -74,8 +75,66 @@ $result = $risk;
 report_number(1, $result);
 
 exit unless $main::do_part_2;
-# Part 2
 
+
+# Part 2
+sub scan_range {
+    my ($row, $step, $col, $lo_c, $hi_c, $size, %inside) = (0) x 6;
+    $row = shift;
+    $step = shift;
+    return if (0 > $row + $step);
+    return if ($row + $step > $#map);
+    $row += $step;
+    $lo_c = shift;
+    if (0 != $step) {
+        $hi_c = shift;
+    } else {
+        $hi_c = $#{$map[$row]};
+    }
+    $col = $lo_c;
+    while ($col <= $hi_c) {
+        my ($start, $stop) = (-1) x 2;
+        my $sub_col = $col;
+        while ($col >= 0 && 9 > $map[$row]->[$col]) {
+            $inside{"$row:$col"} = "y";
+            $start = $col--;
+        }
+        $col = 1 + $sub_col;
+        while ($sub_col < $hi_c && $col <= $#{$map[$row]} && 9 > $map[$row]->[$col]) {
+            $inside{"$row:$col"} = "y";
+            $start = $col if (0 > $start);
+            $stop = $col++;
+        }
+        if (-1 == $stop && -1 < $start) {
+            $stop = $sub_col;
+        };
+        if (0 <= $stop && $row + $step >= 0 && $row + $step < @map) {
+            my @subset;
+            if (0 == $step) {
+                for (scan_range($row, -1, $start, $stop)) {
+                    $inside{$_} = 'y';
+                }
+                for (scan_range($row, 1, $start, $stop)) {
+                    $inside{$_} = 'y';
+                }
+                $hi_c = -1;
+            } else {
+                for (scan_range($row, $step, $start, $stop)) {
+                    $inside{$_} = 'y';
+                }
+            }
+        }
+    }
+    return keys %inside;
+}
+my @totals;
+for (@lows) {
+    my ($r, $c) = split /:/, $_;
+    my @tally = scan_range($r, 0, $c);
+    push @totals, scalar(@tally);
+}
+@totals = (sort {$b <=> $a} @totals)[0..2];
+$result = $totals[0] * $totals[1] * $totals[2];
 report_number(2, $result);
 
 

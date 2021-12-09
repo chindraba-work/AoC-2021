@@ -50,8 +50,8 @@ sub split_data {
     my (@diagnostics, @outputs);
     for (@data) {
         my ($left, $right) = split /\s+\|\s+/;
-        my @diagnostic = sort(split /\s+/, $left);
-        my @output = sort(split /\s+/, $right);
+        my @diagnostic = split /\s+/, $left;
+        my @output = split /\s+/, $right;
         push @diagnostics, \@diagnostic;
         push @outputs, \@output;
     }
@@ -70,12 +70,57 @@ for (@$outputs) {
     }
 }
 
-
 report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
+sub decode_line {
+    my $input_list = shift;
+    my $output_list = shift;
+    my ($filter, $threes, $fours, @fives, @sixes, $sevens, @digits, %segments);
+    $threes = ($input_list =~ m<\b([a-g]{3})\b>)[0];
+    $fours  = ($input_list =~ m<\b([a-g]{4})\b>)[0];
+    @fives  =  $input_list =~ m<\b([a-g]{5})\b>g;
+    @sixes  =  $input_list =~ m<\b([a-g]{6})\b>g;
+    $sevens = ($input_list =~ m<\b([a-g]{7})\b>)[0];
+    $filter = join '|', (split //, "$threes$fours");
+    for (map { s/$filter//g; $_ } (map { $_ } @sixes)) {
+        $segments{(1 == length)?'G':'E'} = $_;
+    }
+    $segments{'E'} =~ s/$segments{'G'}//g;
+    $filter = join '|', ($segments{'G'}, split //, $threes);
+    $segments{'B'} = $segments{'D'} = $segments{'E'} = '';
+    for (map { s/$filter//g; $_ } (map { $_ } @fives)) {
+        $segments{(1 == length)?'D':'B'} .= $_;
+    }
+    $filter = join '|', (split //, $fours);
+    $segments{'E'} = $segments{'B'} =~ s/$filter//gr;
+    $segments{'B'} =~ s/$segments{'E'}|$segments{'D'}//g;
+    for (split /\s+/, $output_list) {
+        my ($size, $digit);
+        $size = length;
+        $digit = (2 == $size) ? 1 :
+            (3 == $size)? 7 :
+            (4 == $size)? 4 :
+            (7 == $size)? 8 :
+            (5 == $size)? (
+                (m<$segments{'E'}>)? 2 : (
+                    (m<$segments{'B'}>)? 5 : 3
+                )
+            ) : (
+                (! m<$segments{'D'}>)? 0 : (
+                    (m<$segments{'E'}>)? 6 : 9
+                )
+            );
+        push @digits, $digit;
+    }
+    return 0 + join '', @digits;
+}
 
+$result = 0;
+for (@puzzle_data) {
+    $result += decode_line(split /\s+\|\s+/);
+}
 report_number(2, $result);
 
 

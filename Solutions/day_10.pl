@@ -39,6 +39,7 @@ use warnings;
 use Elves::GetData qw( :all );
 use Elves::Reports qw( :all );
 use Switch;
+use Statistics::Basic qw( :all );
 
 my $VERSION = '0.21.10';
 
@@ -47,6 +48,7 @@ my $result = 0;
 my @puzzle_data = read_lines $main::puzzle_data_file;
 my %values = qw/) 1 ] 2 } 3 > 4/;
 my $score = 0;
+my @bonuses;
 for (@puzzle_data) {
     my $valid = 1;
     my $corrupt = 0;
@@ -99,6 +101,13 @@ for (@puzzle_data) {
         }
         $pos++;
     }
+    if (!$corrupt && 0 != @stack) {
+        my $bonus = 0;
+        for (reverse @stack) {
+            $bonus = $bonus * 5 + $values{$_};
+        }
+        push @bonuses, $bonus;
+    }
 }
 
 
@@ -110,7 +119,10 @@ report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
+$result = 0+median(sort{$a<=>$b}@bonuses);
+#@bonuses = sort {$a<=>$b} @bonuses;
 
+#$result = mode(@bonuses);
 report_number(2, $result);
 
 

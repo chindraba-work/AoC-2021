@@ -42,7 +42,8 @@ use Elves::Reports qw( :all );
 my $VERSION = '0.21.12';
 
 my $result = 0;
-
+my $part;
+my $specials = 0;
 my @puzzle_data = read_lines $main::puzzle_data_file;
 #@puzzle_data = qw(dc-end HN-start start-kj dc-start dc-HN LN-dc HN-end kj-sa kj-HN kj-dc);
 #@puzzle_data = qw(start-A start-b A-c A-b b-d A-end b-end);
@@ -67,40 +68,38 @@ sub find_source {
     my @new_routes;
     my @possibles = @{$tubes{$cave}};
     for my $possible (@possibles) {
-        if ($possible !~ /^[a-z]+$/ || 0 == $smalls->{$possible}) {
+        if ($possible !~ /^[a-z]+$/ || 0 == $smalls->{$possible} ||
+                (2 == $part && 0 == $specials && 1 == $smalls->{$possible})) {
             for (@routes) {
-                $smalls->{$possible} = 1 if ($possible =~ /^[a-z]+$/);
+                $smalls->{$possible} += 1 if ($possible =~ /^[a-z]+$/);
+                $specials = 1 if ($possible =~ /^[a-z]+$/ && 2 == $smalls->{$possible});
                 my @temp = [($possible, @{$_})];
                 my @new_temp;
                 unless ('<' eq $possible) {
                     @new_temp = find_source($possible, $tubes, $smalls, @temp);
-                    $smalls->{$possible} = 0 if ($possible =~ /^[a-z]+$/);
+                    $specials = 0 if ($possible =~ /^[a-z]+$/ && 2 == $smalls->{$possible});
+                    $smalls->{$possible} -= 1 if ($possible =~ /^[a-z]+$/);
                     push @new_routes, @new_temp;
                 } else {
                     push @new_routes, @temp;
                 }
             }
         }
-#       for (@routes) {
-#           my @temp = @{$_};
-#           unshift @temp, $possible;
-#           push @new_routes, [@temp];
-#       }
     }
     return @new_routes;
 }
-my @routes = (
-    ['}'],
-);
-
-@routes = find_source('}', \%tubes, \%small_caves, @routes);
+my @routes;
+$part = 1;
+@routes = find_source('}', \%tubes, \%small_caves, (['}']));
 $result = @routes;
 
 report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
-
+$part = 2;
+@routes = find_source('}', \%tubes, \%small_caves, (['}']));
+$result = @routes;
 report_number(2, $result);
 
 

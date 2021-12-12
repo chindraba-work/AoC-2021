@@ -96,26 +96,32 @@ sub trigger_flash {
     }
     return $flashes;
 }
-my ($matrix, $timed_flashes, $total_flashes);
+my ($matrix, $timed_flashes, $total_flashes, $flashes, $step, $first_sync);
 
 
 #say Dumper(@timed_flashes);
 # Part 1
 $matrix = [ map { [split //] } (read_lines $main::puzzle_data_file)];
 $total_flashes = 0;
-for (1..100) {
+$step = 0;
+$first_sync = 0;
+while (! $first_sync) {
+    $step++;
+    $flashes = 0;
     increment_matrix($matrix);
     $timed_flashes = find_flashers($matrix);
     for (@{$timed_flashes}) {
-        $total_flashes += trigger_flash($matrix, $_);
+        $flashes += trigger_flash($matrix, $_);
     }
+    $first_sync = $step if (100 == $flashes && 0 == $first_sync);
+    $total_flashes += $flashes unless (100 < $step);
 }
 $result = $total_flashes;
 report_number(1, $result);
 
 exit unless $main::do_part_2;
 # Part 2
-
+$result = $first_sync;
 report_number(2, $result);
 
 

@@ -91,9 +91,29 @@ $result = scalar(keys %dots1);
 report_number(1, $result);
 exit unless $main::do_part_2;
 # Part 2
+for (@folds) {
+    %dots = do_fold($_, \%dots);
+}
+my ($top_rank, $top_file) = (0) x2;
+my @visual = ([]);
+for (keys %dots) {
+    my ($rank, $file) = split ',';
+    $top_rank = $rank if $rank > $top_rank;
+    $top_file = $file if $file > $top_file;
+}
+for (sort keys %dots) {
+    my ($rank,$file) = split /,/;
+    $visual[$file]->[$rank] = '•';
+}
+for my $file (0..$top_file) {
+    for my $rank (0..$top_rank) {
+        $visual[$file]->[$rank] = ' ' unless $visual[$file]->[$rank];
+    }
+}
+for (@visual) {
+    say join '', @{$_};
+}
 
-
-report_number(2, $result);
 
 
 1;

@@ -37,6 +37,7 @@
 use 5.030000;
 use strict;
 use warnings;
+use Time::HiRes;
 use lib ".";
 use lib "./../AoC-Common";
 
@@ -44,6 +45,7 @@ our $aoc_year = 2021;
 our $use_live_data = 0;
 our $do_part_2 = 0;
 
+our @start_time;
 exit unless ( @ARGV );
 
 our $challenge_day = shift @ARGV;
@@ -68,7 +70,11 @@ if ( @ARGV ) {
 }
 
 do {
-    do $solution_file;
+    push @start_time, [Time::HiRes::gettimeofday()];
+    unless (my $return = do $solution_file) {
+        warn "$@" if $@;
+    }
+    printf "Advent of Code %4u, Day %2u processing completed in %.6f sec.\n\n", $aoc_year, $challenge_day, Time::HiRes::tv_interval($start_time[0]);
     exit;
 } if ( -f $puzzle_data_file && -f $solution_file );
 

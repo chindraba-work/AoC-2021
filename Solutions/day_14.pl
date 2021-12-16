@@ -73,6 +73,9 @@ report_number(1, $result);
 exit unless $main::do_part_2;
 # Part 2
 
+$key = insertion($rule, $element, $key) for (11..40);
+($min,$max) = (sort {$$element{$a}<=>$$element{$b}} (keys %$element))[0,-1];
+$result = $$element{$max} - $$element{$min};
 report_number(2, $result);
 
 

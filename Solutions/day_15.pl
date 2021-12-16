@@ -98,6 +98,14 @@ report_number(1, $result);
 die 'Not running part 2' unless $main::do_part_2;
 # Part 2
 
+my $max_r = $#puzzle_grid;
+my @d = map{my $r=$_;join '',(map{my $g=$_;join '',map{my $v=$puzzle_grid[$r]->[$_]+$g;$v -= 9 if 9<$v;$v;}(0..$max_r)}(0..8))}(0..$max_r);
+my $f = @puzzle_grid;
+@densities =  map { my $m = $_; map { my $r = $_; [split //, substr($d[$r], $m * $f , $f * 5)]; }(0..$max_r);}(0..4);
+@visit_list = map { [ (0) x @{$densities[0]}] } @densities;
+@risk_map = map { [ (2**52) x @{$densities[0]}] } @densities;
+@chiton_list = ();
+$result = safest(@densities);
 report_number(2, $result);
 
 

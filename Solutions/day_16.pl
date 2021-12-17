@@ -54,91 +54,47 @@ $msg = 'C0015000016115A2E0802F182340';
 $msg = slurp_data $main::puzzle_data_file;
 
 my $ver_sum = 0;
-my $bits = '';
+my $bits = join '', map { sprintf '%04b', hex $_ } split //, $msg;
 
-sub flush_bits {
-    substr $bits, 0, length($bits)%4, '' if length($bits)%4;
-}
-sub load_bits {
-    $bits .= sprintf "%0*b",4*int(.8+($_[0]?$_[0]:8)/4),hex(substr $msg,0,int(.8+($_[0]?$_[0]:8)/4),'');
-}
-sub read_bits {
-    my $wanted = shift;
-    load_bits $wanted - length $bits if $wanted > length $bits;
-    return substr $bits, 0, $wanted, '';
-}
-sub get_version {
-    return oct ('0b'.read_bits 3);
-}
-sub get_type {
-    return oct ('0b'.read_bits 3);
-}
-sub get_mode {
-    return read_bits 1;
-}
-sub get_len {
-    return oct('0b'.read_bits 15);
-}
-sub get_count {
-    return oct('0b'.read_bits 11);
-}
-sub get_digit {
-    my $num = oct ('0b'.read_bits 5);
-    return $num;
-}
-sub get_num_literal {
-    my $val = 0;
-    my $more = 1;
-    my $bit_count = 0;
-    while ($more) {
-        $bit_count += 5;
-        my $tmp = get_digit;
-        if (16 & $tmp) {
-            $val = ($val<<4) + ($tmp & 15);
-        } else {
-            $more = 0;
-            $val = ($val<<4)+$tmp;
-        }
-    }
-    return ($val, $bit_count);
-}
 sub get_packet {
-    my %packet;
-    my ($bit_size, $bits_read, $bits_used); 
-    $bit_size = 0;
-    $packet{'ver'} = get_version;
-    $bit_size += 3;
-    $ver_sum += $packet{'ver'};
-    $packet{'type'} = get_type;
-    $bit_size += 3;
-    if (4 == $packet{'type'}) {
-        ($packet{'value'}, $bits_read) = get_num_literal;
-        $bit_size += $bits_read;
+    my ($bit_size, $bits_read, $bits_used, $mode, $type, $value); 
+    $ver_sum += oct '0b'.substr $bits, 0, 3, '';
+    $type = oct '0b'.substr $bits, 0, 3, '';
+    $bit_size = 6;
+    if (4 == $type) {
+        my ($more, $num) = (0) x 2;
+        do {
+            $more = substr $bits, 0, 1, '';
+            $num = $num * 16 + oct '0b'.substr $bits, 0, 4, '';
+            $bit_size += 5;
+        } while $more;
+        $value = $num;
     } else {
-        $packet{'mode'} = get_mode;
+        $mode = oct '0b'.substr $bits, 0, 1, '';
         $bit_size += 1;
-        if ($packet{'mode'}) {
-            $packet{'count'} = get_count;
-            $bit_size += 15;
-            $packet{'children'} = [];
-            for (1..$packet{'count'}) {
-                my ($child, $size) = get_packet();
-                push @{$packet{'children'}}, $child;
+        if ($mode) {
+            my ($count, @sub_vals);
+            $count = oct '0b'.substr $bits, 0, 11, '';
+            $bit_size += 11;
+            for (1..$count) {
+                my ($ret_val, $size) = get_packet();
+                push @sub_vals, $ret_val;
                 $bit_size += $size;
             }
         } else {
-            $packet{'len'} = get_len;
-            $bit_size += 11;
+            my ($sub_len, @sub_vals);
+            $sub_len = oct '0b'.substr $bits, 0, 15, '';
+            $bit_size += 15;
             $bits_used = 0;
-            while ($bits_used < $packet{'len'}) {
-                my ($child, $size) = get_packet();
-                push @{$packet{'children'}}, $child;
+            while ($bits_used < $sub_len) {
+                my ($ret_val, $size) = get_packet();
+                push @sub_vals, $ret_val;
                 $bits_used += $size;
             }
             $bit_size += $bits_used;
         }
     }
-    return wantarray? (\%packet, $bit_size) : \%packet;
+    return wantarray? ($value, $bit_size) : $value;
 }
 
 

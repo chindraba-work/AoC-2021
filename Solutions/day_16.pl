@@ -38,6 +38,7 @@ use strict;
 use warnings;
 use Elves::GetData qw( :all );
 use Elves::Reports qw( :all );
+use List::Util qw( sum product min max);
 
 my $VERSION = '0.21.16';
 
@@ -70,10 +71,11 @@ sub get_packet {
         } while $more;
         $value = $num;
     } else {
+        my @sub_vals;
         $mode = oct '0b'.substr $bits, 0, 1, '';
         $bit_size += 1;
         if ($mode) {
-            my ($count, @sub_vals);
+            my $count;
             $count = oct '0b'.substr $bits, 0, 11, '';
             $bit_size += 11;
             for (1..$count) {
@@ -82,7 +84,7 @@ sub get_packet {
                 $bit_size += $size;
             }
         } else {
-            my ($sub_len, @sub_vals);
+            my $sub_len;
             $sub_len = oct '0b'.substr $bits, 0, 15, '';
             $bit_size += 15;
             $bits_used = 0;
@@ -92,6 +94,21 @@ sub get_packet {
                 $bits_used += $size;
             }
             $bit_size += $bits_used;
+        }
+        if (0 == $type) {
+            $value = sum @sub_vals;
+        } elsif (1 == $type) {
+            $value = product @sub_vals;
+        } elsif (2 == $type) {
+            $value = min @sub_vals;
+        } elsif (3 == $type) {
+            $value = max @sub_vals;
+        } elsif (5 == $type) {
+            $value = ($sub_vals[0] > $sub_vals[1])? 1 : 0;
+        } elsif (6 == $type) {
+            $value = ($sub_vals[0] < $sub_vals[1])? 1 : 0;
+        } elsif (7 == $type) {
+            $value = ($sub_vals[0] == $sub_vals[1])? 1 : 0;
         }
     }
     return wantarray? ($value, $bit_size) : $value;
@@ -107,7 +124,7 @@ report_number(1, $result);
 
 die 'Not running part 2 yet.' unless $main::do_part_2;
 # Part 2
-
+$result = $message;
 report_number(2, $result);
 
 

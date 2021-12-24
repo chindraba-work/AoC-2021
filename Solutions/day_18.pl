@@ -107,6 +107,17 @@ report_number(1, $result);
 die 'Not running part 2 yet.' unless $main::do_part_2;
 # Part 2
 
+$result = 0;
+my ($num_1, $num_2);
+for $num_1 (@snail_nums) {
+    for $num_2 (@snail_nums) {
+        $snail_num = "[$num_1,$num_2]";
+        while (exploded || $snail_num =~ s|(\d{2,})|'['.int($1/2).','.int($1/2+.5).']'|e ) {;}
+        my $sum = $snail_num;
+        while ($sum =~ s/\[(?<left>\d+),(?<right>\d+)\]/3 * $+{'left'} + 2 * $+{'right'}/eg ) { ; }
+        $result = $sum if $sum > $result;
+    }
+}
 report_number(2, $result);
 
 
